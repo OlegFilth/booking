@@ -13,10 +13,31 @@ var offers = [
 var types = ['flat', 'house', 'bungalo'];
 var features = ["wifi", "dishwasher", "parking", "washer", "elevator", "conditioner" ]
 var ads = [];
-
 var map = document.querySelector('.map');
 var pin = document.querySelector('template').content.querySelector('.map__pin');
 var card = document.querySelector('template').content.querySelector('.map__card');
+var form = document.querySelector('.notice__form');
+
+var ESC_KEYCODE = 27;
+var ENTER_KEYCODE = 13;
+
+var showMap = () => {
+  map.classList.remove('map--faded');
+}
+
+var showForm = () => {
+  form.classList.remove('notice__form--disabled');
+}
+
+var removePopup = () => {
+  if (document.querySelectorAll('.popup').length > 0) {
+    document.querySelector('.popup').remove();
+  }
+}
+
+var deactivatePin = () => {
+  document.querySelectorAll('.map__pin').forEach((element) => {element.classList.remove('map__pin--active')});
+}
 
 var getRandomNumber = (min, max) => {
   return Math.floor((Math.random() * (max - min + 1)) + min);
@@ -47,6 +68,7 @@ var renderElements = (parentElement, elements) =>  {
   parentElement.appendChild(fragment);
 }
 
+
 for (var i = 1 ; i <= 8; i ++) {
   ads.push({
     author: {
@@ -67,7 +89,7 @@ for (var i = 1 ; i <= 8; i ++) {
     },
     location: {
       x: getRandomNumber(300, 900),
-      y: getRandomNumber(100, 500)
+      y: getRandomNumber(180, 500)
     }
   });
 }
@@ -87,13 +109,13 @@ var createPins = () => {
   return pins;
 }
 
-var createCard = () => {
+var createCard = (index) => {
   var cards = [];
   var cardClone = card.cloneNode(true);
-  cardClone.querySelector('h3').textContent = ads[0].offer.title;
-  cardClone.querySelector('.popup__price').innerHTML = ads[0].offer.price + ' &#x20bd;/ночь';
+  cardClone.querySelector('h3').textContent = ads[index].offer.title;
+  cardClone.querySelector('.popup__price').innerHTML = ads[index].offer.price + ' &#x20bd;/ночь';
 
-  switch(ads[0].offer.type) {
+  switch(ads[index].offer.type) {
     case 'bungalo':
     cardClone.querySelector('h4').textContent = 'Бунгало';
     break;
@@ -106,22 +128,49 @@ var createCard = () => {
     cardClone.querySelector('h4').textContent = 'Дом';
     break;
   }
-  cardClone.children[6].textContent = ads[0].offer.rooms + ' комнаты для ' + ads[0].offer.guests + ' гостей';
-  cardClone.children[7].textContent = 'Заезд после ' + ads[0].offer.checkin + ', выезд до ' + ads[0].offer.checkout;
+  cardClone.children[6].textContent = ads[index].offer.rooms + ' комнаты для ' + ads[index].offer.guests + ' гостей';
+  cardClone.children[7].textContent = 'Заезд после ' + ads[index].offer.checkin + ', выезд до ' + ads[index].offer.checkout;
 
   cardClone.querySelector('.popup__features').innerHTML = '';
-  for (var i = 0; i < ads[0].offer.features.length; i++) {
-    cardClone.querySelector('.popup__features').insertAdjacentHTML('beforeend','<li class="feature feature--' + ads[0].offer.features[i] + '"></li>');
+  for (var i = 0; i < ads[index].offer.features.length; i++) {
+    cardClone.querySelector('.popup__features').insertAdjacentHTML('beforeend','<li class="feature feature--' + ads[index].offer.features[i] + '"></li>');
   }
   
-  cardClone.children[9].textContent = ads[0].offer.description;
+  cardClone.children[9].textContent = ads[index].offer.description;
 
-  cardClone.querySelector('.popup__avatar').setAttribute('src', ads[0].author.avatar);
+  cardClone.querySelector('.popup__avatar').setAttribute('src', ads[index].author.avatar);
 
   cards.push(cardClone);
   return cards;
 }
 
-renderElements(document.querySelector('.map__pins'), createPins());
-renderElements(document.querySelector('.map'), createCard());
+var onMapClick = () => {
+  showMap();
+  showForm();
+  renderElements(document.querySelector('.map__pins'), createPins());
+  map.removeEventListener('mouseup', onMapClick);
+}
+
+map.addEventListener('mouseup', onMapClick);
+
+map.addEventListener('click', (event) => {
+  document.querySelectorAll('.map__pin').forEach((element, index) => {
+    element.addEventListener('click', () => {
+      removePopup();
+      deactivatePin();
+      element.classList.add('map__pin--active');
+      renderElements(document.querySelector('.map'), createCard(index - 1));
+      document.querySelector('.popup__close').addEventListener('click', () => {
+        removePopup();
+        deactivatePin(); 
+      });
+      document.body.addEventListener('keydown', (event) => {
+        if (event.keyCode === 27) {
+          removePopup();
+          deactivatePin();       
+        }
+      });
+    });
+  });
+});
 

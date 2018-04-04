@@ -418,6 +418,10 @@ textarea:focus {
   text-indent: 0;
 }
 
+.popup--closed {
+  display: none;
+}
+
 .map__filters-container {
   background-color: rgba(3, 28, 45, 0.5);
 
